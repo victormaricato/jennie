@@ -9,7 +9,6 @@ Live: https://victormaricato-jennie.static.hf.space
 ## Links
 
 - Web tool: https://victormaricato-jennie.static.hf.space
-- Backend API: https://victormaricato-jennie-api.hf.space
 - Classifier weights: https://huggingface.co/victormaricato/glof-lof-gof-classifier
 - GLOF benchmark dataset: https://huggingface.co/datasets/victormaricato/glof
 - Benchmark experiments: https://github.com/victormaricato/jennie-paper
