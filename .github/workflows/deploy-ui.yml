@@ -1,0 +1,58 @@
+name: Deploy UI to HuggingFace Space
+
+# Builds the Next.js UI (static export) and pushes it to the HF static Space
+# victormaricato/jennie, which serves it free at
+# https://victormaricato-jennie.static.hf.space (no custom domain).
+# Requires repo secret HF_TOKEN (a write-scoped HuggingFace token).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "webapp/ui/**"
+      - ".github/workflows/deploy-ui.yml"
+  workflow_dispatch:
+
+# Minimal permissions: this job only reads the repo and pushes the build to the
+# HF Space using HF_TOKEN. It never needs write access to the GitHub repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-ui
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_BASE_PATH: ""
+  NEXT_PUBLIC_API_BASE: https://victormaricato-jennie-api.hf.space
+  HF_SPACE: victormaricato/jennie
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: webapp/ui/pnpm-lock.yaml
+
+      - name: Build UI
+        working-directory: webapp/ui
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm build
+          cp README-space.md out/README.md
+
+      - name: Publish to HF static Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install --quiet "huggingface_hub[cli]>=0.24"
+          hf upload "$HF_SPACE" webapp/ui/out . \
+            --repo-type=space --commit-message="CI: deploy UI build"
